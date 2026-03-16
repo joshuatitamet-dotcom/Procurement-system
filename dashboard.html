@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suppliers & Procurement Dashboard</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      display: flex;
+      min-height: 100vh;
+      background-color: #f5f7fa;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 250px;
+      background-color: #002b5b;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #00c3ff;
+    }
+
+    .sidebar a {
+      text-decoration: none;
+      color: #d9e6f2;
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      transition: background 0.3s ease;
+    }
+
+    .sidebar a:hover {
+      background-color: #00c3ff;
+      color: #001833;
+    }
+
+    /* Top bar */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      background: white;
+      padding: 15px 25px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .topbar h1 {
+      font-size: 22px;
+      color: #002b5b;
+    }
+
+    .topbar input {
+      padding: 7px 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      width: 250px;
+    }
+
+    /* Dashboard area */
+    .dashboard {
+      padding: 25px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      transition: 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+    }
+
+    .card h3 {
+      color: #002b5b;
+      margin-bottom: 8px;
+    }
+
+    .card p {
+      color: #555;
+    }
+
+    /* Responsive fix */
+    @media (max-width: 700px) {
+      .sidebar {
+        display: none;
+      }
+      .topbar h1 {
+        font-size: 18px;
+      }
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>ProcurePro</h2>
+    <a href="#">🏠 Dashboard</a>
+     <a href="supplier.html">🏢 Suppliers</a>
+    <a href="order.html">🧾 Orders</a>
+    <a href="#">🧾 Purchase Orders</a>
+    <a href="#">📦 Inventory</a>
+    <a href="#">💰 Payments</a>
+    <a href="reports.html">📊 Reports</a>
+    <a href="#">⚙️ Settings</a>
+    <a href="#">🚪 Logout</a>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1>Welcome to Procurement Dashboard</h1>
+      <input type="text" placeholder="Search orders or suppliers...">
+    </div>
+
+    <div class="dashboard">
+      <div class="card">
+        <h3>Total Suppliers</h3>
+        <p>58 Registered Suppliers</p>
+      </div>
+      <div class="card">
+        <h3>Pending Orders</h3>
+        <p>12 Orders Awaiting Approval</p>
+      </div>
+      <div class="card">
+        <h3>Inventory Items</h3>
+        <p>480 Items In Stock</p>
+      </div>
+      <div class="card">
+        <h3>Payments Processed</h3>
+        <p>$24,650 This Month</p>
+      </div>
+      <div class="card">
+        <h3>Low Stock Alerts</h3>
+        <p>6 Items Need Restocking</p>
+      </div>
+      <div class="card">
+        <h3>New Requests</h3>
+        <p>3 Purchase Requests Pending</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

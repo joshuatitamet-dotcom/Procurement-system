@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orders | Procurement System</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f6f8;
+        padding: 20px;
+    }
+
+    h2 { color: #003366; margin-bottom: 10px; }
+
+    .btn {
+        background: #007bff;
+        color: #fff;
+        padding: 8px 15px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+
+    .btn:hover { background: #005fcc; }
+
+    /* Table */
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        background: white;
+        margin-bottom: 30px;
+    }
+
+    th, td {
+        border: 1px solid #ddd;
+        padding: 10px;
+    }
+
+    th {
+        background: #003366;
+        color: #fff;
+    }
+
+    tr:nth-child(even) { background: #eef3f7; }
+
+    /* Wizard form */
+    .wizard {
+        display: none;
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+        max-width: 600px;
+    }
+
+    .input-box {
+        margin-bottom: 15px;
+    }
+
+    .input-box input, .input-box select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .step-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+</style>
+</head>
+<body>
+
+<h2>Purchase Orders</h2>
+
+<button class="btn" onclick="openWizard()">➕ Create New Order</button>
+
+<!-- ORDER LIST -->
+<table>
+<thead>
+<tr>
+    <th>Order ID</th>
+    <th>Supplier</th>
+    <th>Date</th>
+    <th>Status</th>
+</tr>
+</thead>
+<tbody id="orderTable">
+    <!-- Dummy data -->
+</tbody>
+</table>
+
+<!-- CREATE ORDER WIZARD -->
+<div id="wizard" class="wizard">
+
+    <!-- STEP 1 -->
+    <div id="step1">
+        <h3>Step 1: Supplier Details</h3>
+
+        <div class="input-box">
+            <label>Supplier Name</label>
+            <select id="supplierName">
+                <option>Supplier A</option>
+                <option>Supplier B</option>
+                <option>Supplier C</option>
+            </select>
+        </div>
+
+        <div class="input-box">
+            <label>Order Date</label>
+            <input type="date" id="orderDate">
+        </div>
+
+        <div class="step-buttons">
+            <span></span>
+            <button class="btn" onclick="goStep(2)">Next →</button>
+        </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div id="step2" style="display:none;">
+        <h3>Step 2: Order Items</h3>
+
+        <div class="input-box">
+            <label>Item Name</label>
+            <input type="text" id="itemName">
+        </div>
+
+        <div class="input-box">
+            <label>Quantity</label>
+            <input type="number" id="itemQty" min="1">
+        </div>
+
+        <div class="step-buttons">
+            <button class="btn" onclick="goStep(1)">← Back</button>
+            <button class="btn" onclick="goStep(3)">Next →</button>
+        </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div id="step3" style="display:none;">
+        <h3>Step 3: Confirm Order</h3>
+
+        <p><strong>Supplier:</strong> <span id="cSupplier"></span></p>
+        <p><strong>Date:</strong> <span id="cDate"></span></p>
+        <p><strong>Item:</strong> <span id="cItem"></span></p>
+        <p><strong>Quantity:</strong> <span id="cQty"></span></p>
+
+        <div class="step-buttons">
+            <button class="btn" onclick="goStep(2)">← Back</button>
+            <button class="btn" onclick="submitOrder()">Submit ✔</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+
+    let orders = [];
+
+    function openWizard() {
+        document.getElementById("wizard").style.display = "block";
+        goStep(1);
+    }
+
+    function goStep(step) {
+        document.getElementById("step1").style.display = "none";
+        document.getElementById("step2").style.display = "none";
+        document.getElementById("step3").style.display = "none";
+
+        document.getElementById("step" + step).style.display = "block";
+
+        if (step === 3) {
+            document.getElementById("cSupplier").textContent = document.getElementById("supplierName").value;
+            document.getElementById("cDate").textContent = document.getElementById("orderDate").value;
+            document.getElementById("cItem").textContent = document.getElementById("itemName").value;
+            document.getElementById("cQty").textContent = document.getElementById("itemQty").value;
+        }
+    }
+
+    function submitOrder() {
+        const supplier = document.getElementById("supplierName").value;
+        const date = document.getElementById("orderDate").value;
+        const item = document.getElementById("itemName").value;
+        const qty = document.getElementById("itemQty").value;
+
+        if (!supplier || !date || !item || !qty) {
+            alert("Please fill all fields");
+            return;
+        }
+
+        orders.push({
+            id: orders.length + 1,
+            supplier,
+            date,
+            status: "Pending"
+        });
+
+        renderOrders();
+        document.getElementById("wizard").style.display = "none";
+        alert("Order Created Successfully!");
+    }
+
+    function renderOrders() {
+        const table = document.getElementById("orderTable");
+        table.innerHTML = "";
+
+        orders.forEach(order => {
+            const row = `<tr>
+                            <td>${order.id}</td>
+                            <td>${order.supplier}</td>
+                            <td>${order.date}</td>
+                            <td>${order.status}</td>
+                        </tr>`;
+            table.innerHTML += row;
+        });
+    }
+
+</script>
+
+</body>
+</html>
