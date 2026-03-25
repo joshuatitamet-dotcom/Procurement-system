@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function OrdersPage() {
+
+  const router = useRouter();
 
   const [orders,setOrders] = useState([]);
   const [suppliers,setSuppliers] = useState([]);
@@ -15,6 +18,71 @@ export default function OrdersPage() {
     supplier:"",
     request:""
   });
+
+  const [showSuccess, setShowSuccess] = useState(false);
+ async function deleteOrder(id) {
+  if (!confirm("Delete this order?")) return;
+
+  try {
+    const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+      method: "DELETE"
+    });
+
+    if (res.ok) {
+      // Find the order to get supplier and request IDs
+      const orderToDelete = orders.find(o => o._id === id);
+      
+      // Remove order from UI
+      setOrders(prev => prev.filter(o => o._id !== id));
+      
+      // Remove linked supplier
+      if (orderToDelete?.supplier?._id) {
+        setSuppliers(prev => prev.filter(s => s._id !== orderToDelete.supplier._id));
+      }
+      
+      // Remove linked request
+      if (orderToDelete?.request?._id) {
+        setRequests(prev => prev.filter(r => r._id !== orderToDelete.request._id));
+      }
+      
+      alert("Order and related items deleted successfully");
+    } else {
+      alert("Failed to delete order");
+    }
+  } catch (err) {
+    console.log(err);
+    alert("Server error");
+  }
+}
+async function handleComplete(id) {
+  try {
+    const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ status: "Completed" })
+    });
+
+    if (res.ok) {
+      alert("Order Completed");
+
+      // update UI instantly
+      setOrders(prev =>
+        prev.map(o =>
+          o._id === id ? { ...o, status: "Completed" } : o
+        )
+      );
+
+    } else {
+      alert("Failed to update order");
+    }
+
+  } catch (err) {
+    console.log(err);
+    alert("Server error");
+  }
+}
 
   useEffect(()=>{
 
@@ -46,13 +114,19 @@ export default function OrdersPage() {
       headers:{
         "Content-Type":"application/json"
       },
-      body:JSON.stringify(form)
+      body:JSON.stringify({status:"completed",...form})
     });
 
     const data = await res.json();
 
     if(res.ok){
       setOrders([...orders,data.order]);
+      setShowSuccess(true);
+      setForm({ supplier: "", request: "" }); // Reset form
+      const goToDashboard = confirm("Order created! Would you like to return to the dashboard?");
+      if (goToDashboard) {
+        window.location.href="/dashboard";
+      }
     }
   
   }
@@ -73,12 +147,21 @@ export default function OrdersPage() {
 
       <div style={header}>
 
-        <h1>Purchase Orders</h1>
+        <div>
+          <h1>Purchase Orders</h1>
+          <button style={navBtn} onClick={() => router.push('/requests')}>← Requests</button>
+        </div>
 
         
 
       </div>
 
+      {showSuccess && (
+        <div style={successMessage}>
+          <span>✅ Order created successfully!</span>
+          <button style={closeBtn} onClick={() => setShowSuccess(false)}>×</button>
+        </div>
+      )}
 
       {/* KPI CARDS */}
 
@@ -175,6 +258,7 @@ export default function OrdersPage() {
             <th style={th}>Supplier</th>
             <th style={th}>Status</th>
             <th style={th}>Progress</th>
+            <th style={th}>Actions</th>
 
           </tr>
 
@@ -184,7 +268,7 @@ export default function OrdersPage() {
 
           {filteredOrders.map((o,i)=>(
 
-            <tr key={o._id} style={row}>
+            <tr key={o._id} style ={row}>           
 
               <td style={td}>PO-{1000+i}</td>
 
@@ -195,6 +279,8 @@ export default function OrdersPage() {
               <td style={td}>
                 {o.supplier?.name}
               </td>
+              
+    
 
               <td style={td}>
                 <span style={statusBadge(o.status)}>
@@ -203,21 +289,31 @@ export default function OrdersPage() {
               </td>
 
               <td style={td}>
-                <div style={progressBar}>
+               <div style={progressBar}>
                   <div style={{...progressFill,width:"60%"}}></div>
                 </div>
-              </td>
+               </td>
+               <td style={td}>
 
-            </tr>
+        <button onClick={() => handleComplete(o._id)} style={completeBtn}>
+          Complete
+        </button>
 
+        <button onClick={() => deleteOrder(o._id)} style={deleteBtn}>
+          Delete
+        </button>
+
+      </td>
+               </tr>
+ 
+            
           ))}
 
         </tbody>
 
       </table>
 
-    </div>
-
+  </div>
   )
 
 }
@@ -238,14 +334,38 @@ const header={
   alignItems:"center"
 }
 
-const backBtn={
+const navBtn={
   padding:"8px 14px",
-  background:"#111",
-  color:"#fff",
-  border:"none",
+  background:"#dbeafe",
+  color:"#1e40af",
+  border:"1px solid #93c5fd",
   borderRadius:6,
-  cursor:"pointer"
+  cursor:"pointer",
+  fontWeight:600
 }
+
+const successMessage = {
+  background: "#d1fae5",
+  color: "#065f46",
+  padding: "12px 16px",
+  borderRadius: 8,
+  marginTop: 20,
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  border: "1px solid #a7f3d0",
+  fontWeight: 500
+};
+
+const closeBtn = {
+  background: "none",
+  border: "none",
+  fontSize: 20,
+  cursor: "pointer",
+  color: "#065f46",
+  padding: 0,
+  marginLeft: 10
+};
 
 const cards={
   display:"grid",
@@ -272,7 +392,14 @@ const searchBox={
   borderRadius:6,
   border:"1px solid #ccc"
 }
-
+const completeBtn = {
+  padding: "6px 10px",
+  background: "#16a34a",
+  color: "#fff",
+  border: "none",
+  borderRadius: 6,
+  cursor: "pointer"
+};
 const formBox={
   marginTop:30,
   padding:20,
@@ -333,7 +460,14 @@ const progressFill={
   background:"#16a34a",
   borderRadius:5
 }
-
+const deleteBtn = {
+  padding: "6px 10px",
+  background: "#ef4444",
+  color: "#fff",
+  border: "none",
+  borderRadius: 6,
+  cursor: "pointer"
+};
 function statusBadge(status){
 
   const colors={
