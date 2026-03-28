@@ -16,7 +16,8 @@ export default function RegisterPage(){
 
     try{
 
-      const res = await fetch("http://localhost:5000/api/register",{
+    fetch("https://procurement-system-2.onrender.com/api/dashboard")
+      const res = await fetch("/api/register",{
         method:"POST",
         headers:{
           "Content-Type":"application/json"

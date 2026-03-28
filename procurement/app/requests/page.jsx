@@ -17,7 +17,8 @@ export default function RequestsPage() {
   const [nextStep, setNextStep] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/requests")
+    fetch("https://procurement-system-2.onrender.com/api/dashboard")
+    fetch("/api/requests")
       .then((res) => res.json())
       .then((data) => setRequests(data))
       .catch((err) => console.log(err));

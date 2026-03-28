@@ -17,7 +17,8 @@ export default function SuppliersPage() {
   const [nextStep, setNextStep] = useState(false);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/suppliers")
+    fetch("https://procurement-system-2.onrender.com/api/dashboard")
+    fetch("/api/suppliers")
       .then((res) => res.json())
       .then((data) => setSuppliers(data))
       .catch((err) => console.log(err));

@@ -21,7 +21,8 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    fetch("https://procurement-system-2.onrender.com/api/dashboard")
+    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
     const url = isLogin
       ? `${API_BASE}/api/auth/login`
       : `${API_BASE}/api/auth/register`;

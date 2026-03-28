@@ -16,7 +16,7 @@ export default function Dashboard() {
   });
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/dashboard")
+    fetch("https://procurement-system-2.onrender.com/api/dashboard")
       .then((res) => res.json())
       .then((data) => setData(data))
       .catch((err) => console.log(err));

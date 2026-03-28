@@ -24,7 +24,8 @@ export default function OrdersPage() {
   if (!confirm("Delete this order?")) return;
 
   try {
-    const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+    fetch("https://procurement-system-2.onrender.com/api/dashboard")
+    const res = await fetch(`/api/orders/${id}`, {
       method: "DELETE"
     });
 
