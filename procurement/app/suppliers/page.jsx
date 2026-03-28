@@ -16,28 +16,39 @@ export default function SuppliersPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [supplierForm, setSupplierForm] = useState({ name: "", email: "", phone: "", status: "Active" });
   const [nextStep, setNextStep] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const fetchSuppliersData = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/suppliers`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setSuppliers(data);
+      } else {
+        console.error('API returned non-array data:', data);
+        setSuppliers([]);
+      }
+    } catch (err) {
+      console.log('Error fetching suppliers:', err);
+      setSuppliers([]);
+    }
+  };
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/suppliers`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        // Ensure data is an array before setting it
-        if (Array.isArray(data)) {
-          setSuppliers(data);
-        } else {
-          console.error('API returned non-array data:', data);
-          setSuppliers([]);
-        }
-      })
-      .catch((err) => {
-        console.log('Error fetching suppliers:', err);
-        setSuppliers([]);
-      });
+    fetchSuppliersData();
+  }, [refreshTrigger]);
+
+  // Function to refresh data
+  const refreshData = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Make refresh function available globally
+  useEffect(() => {
+    window.refreshSuppliersPage = refreshData;
   }, []);
 
   const filteredSuppliers = useMemo(() => {
@@ -74,7 +85,7 @@ export default function SuppliersPage() {
     if (!supplierForm.name || !supplierForm.email || !supplierForm.phone) return;
 
     try {
-      const res = await fetch("http://localhost:5000/api/suppliers", {
+      const res = await fetch(`${API_BASE_URL}/api/suppliers`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(supplierForm)
@@ -85,6 +96,14 @@ export default function SuppliersPage() {
       setSupplierForm({ name: "", email: "", phone: "", status: "Active" });
       setNextStep(true);
       alert("Supplier added");
+
+      // Refresh dashboard and orders page data
+      if (window.refreshDashboard) {
+        window.refreshDashboard();
+      }
+      if (window.refreshOrdersPage) {
+        window.refreshOrdersPage();
+      }
     } catch (error) {
       console.error(error);
       alert(error.message);

@@ -16,28 +16,39 @@ export default function RequestsPage() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [requestForm, setRequestForm] = useState({ itemName: "", quantity: "", department: "", status: "Pending" });
   const [nextStep, setNextStep] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const fetchRequestsData = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/requests`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setRequests(data);
+      } else {
+        console.error('API returned non-array data:', data);
+        setRequests([]);
+      }
+    } catch (err) {
+      console.log('Error fetching requests:', err);
+      setRequests([]);
+    }
+  };
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/requests`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        // Ensure data is an array before setting it
-        if (Array.isArray(data)) {
-          setRequests(data);
-        } else {
-          console.error('API returned non-array data:', data);
-          setRequests([]);
-        }
-      })
-      .catch((err) => {
-        console.log('Error fetching requests:', err);
-        setRequests([]);
-      });
+    fetchRequestsData();
+  }, [refreshTrigger]);
+
+  // Function to refresh data
+  const refreshData = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Make refresh function available globally
+  useEffect(() => {
+    window.refreshRequestsPage = refreshData;
   }, []);
 
   const filteredRequests = useMemo(() => {
@@ -73,7 +84,7 @@ export default function RequestsPage() {
     e.preventDefault();
     if (!requestForm.itemName || !requestForm.quantity || !requestForm.department) return;
     try {
-      const res = await fetch("http://localhost:5000/api/requests", {
+      const res = await fetch(`${API_BASE_URL}/api/requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestForm)
@@ -84,6 +95,14 @@ export default function RequestsPage() {
       setRequestForm({ itemName: "", quantity: "", department: "", status: "Pending" });
       setNextStep(true);
       alert("Request added");
+
+      // Refresh dashboard and orders page data
+      if (window.refreshDashboard) {
+        window.refreshDashboard();
+      }
+      if (window.refreshOrdersPage) {
+        window.refreshOrdersPage();
+      }
     } catch (error) {
       console.error(error);
       alert(error.message);

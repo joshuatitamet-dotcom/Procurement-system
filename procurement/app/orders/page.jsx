@@ -21,6 +21,34 @@ export default function OrdersPage() {
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const fetchOrdersData = async () => {
+    try {
+      // Fetch orders
+      const ordersRes = await fetch(`${API_BASE_URL}/api/orders`);
+      if (ordersRes.ok) {
+        const ordersData = await ordersRes.json();
+        setOrders(Array.isArray(ordersData) ? ordersData : []);
+      }
+
+      // Fetch suppliers
+      const suppliersRes = await fetch(`${API_BASE_URL}/api/suppliers`);
+      if (suppliersRes.ok) {
+        const suppliersData = await suppliersRes.json();
+        setSuppliers(Array.isArray(suppliersData) ? suppliersData : []);
+      }
+
+      // Fetch requests
+      const requestsRes = await fetch(`${API_BASE_URL}/api/requests`);
+      if (requestsRes.ok) {
+        const requestsData = await requestsRes.json();
+        setRequests(Array.isArray(requestsData) ? requestsData : []);
+      }
+    } catch (err) {
+      console.log('Error fetching data:', err);
+    }
+  };
 
   async function deleteOrder(id) {
     if (!confirm("Delete this order?")) return;
@@ -82,67 +110,19 @@ async function handleComplete(id) {
   }
 }
 
-  useEffect(()=>{
+  useEffect(() => {
+    fetchOrdersData();
+  }, [refreshTrigger]);
 
-    fetch(`${API_BASE_URL}/api/orders`)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (Array.isArray(data)) {
-          setOrders(data);
-        } else {
-          console.error('API returned non-array data for orders:', data);
-          setOrders([]);
-        }
-      })
-      .catch(err => {
-        console.log('Error fetching orders:', err);
-        setOrders([]);
-      });
+  // Function to refresh data (can be called after navigation from other pages)
+  const refreshData = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
 
-    fetch(`${API_BASE_URL}/api/suppliers`)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (Array.isArray(data)) {
-          setSuppliers(data);
-        } else {
-          console.error('API returned non-array data for suppliers:', data);
-          setSuppliers([]);
-        }
-      })
-      .catch(err => {
-        console.log('Error fetching suppliers:', err);
-        setSuppliers([]);
-      });
-
-    fetch(`${API_BASE_URL}/api/requests`)
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (Array.isArray(data)) {
-          setRequests(data);
-        } else {
-          console.error('API returned non-array data for requests:', data);
-          setRequests([]);
-        }
-      })
-      .catch(err => {
-        console.log('Error fetching requests:', err);
-        setRequests([]);
-      });
+  // Make refresh function available globally
+  useEffect(() => {
+    window.refreshOrdersPage = refreshData;
+  }, []);
 
   },[]);
 
@@ -155,15 +135,24 @@ async function handleComplete(id) {
 
     e.preventDefault();
 
+    // Validate form
+    if (!form.supplier || !form.request) {
+      alert("Please select both a supplier and a request");
+      return;
+    }
+
+    console.log("Submitting order with data:", form);
+
     const res = await fetch(`${API_BASE_URL}/api/orders`,{
       method:"POST",
       headers:{
         "Content-Type":"application/json"
       },
-      body:JSON.stringify({status:"completed",...form})
+      body:JSON.stringify({status:"Pending",...form})
     });
 
     const data = await res.json();
+    console.log("API response:", data);
 
     if(res.ok){
       setOrders([...orders,data.order]);
@@ -179,6 +168,8 @@ async function handleComplete(id) {
       setTimeout(() => {
         router.push("/dashboard");
       }, 2000); // Show success message for 2 seconds before redirect
+    } else {
+      alert(`Failed to create order: ${data.message || 'Unknown error'}`);
     }
 
   }
@@ -269,25 +260,25 @@ async function handleComplete(id) {
 
         <h3>Create Purchase Order</h3>
 
-        <select name="request" onChange={handleChange} required style={input}>
+<select name="request" value={form.request} onChange={handleChange} required style={input}>
 
-          <option>Select Request</option>
+          <option value="">Select Request</option>
 
           {requests.map(r=>(
             <option key={r._id} value={r._id}>
-              {r.itemName}
+              {r.itemName} - {r.quantity} units ({r.department})
             </option>
           ))}
 
         </select>
 
-        <select name="supplier" onChange={handleChange} required style={input}>
+        <select name="supplier" value={form.supplier} onChange={handleChange} required style={input}>
 
-          <option>Select Supplier</option>
+          <option value="">Select Supplier</option>
 
           {suppliers.map(s=>(
             <option key={s._id} value={s._id}>
-              {s.name}
+              {s.name} ({s.email})
             </option>
           ))}
 
