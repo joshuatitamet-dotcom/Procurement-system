@@ -19,9 +19,25 @@ export default function SuppliersPage() {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/suppliers`)
-      .then((res) => res.json())
-      .then((data) => setSuppliers(data))
-      .catch((err) => console.log(err));
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // Ensure data is an array before setting it
+        if (Array.isArray(data)) {
+          setSuppliers(data);
+        } else {
+          console.error('API returned non-array data:', data);
+          setSuppliers([]);
+        }
+      })
+      .catch((err) => {
+        console.log('Error fetching suppliers:', err);
+        setSuppliers([]);
+      });
   }, []);
 
   const filteredSuppliers = useMemo(() => {

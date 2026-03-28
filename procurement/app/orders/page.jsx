@@ -85,16 +85,64 @@ async function handleComplete(id) {
   useEffect(()=>{
 
     fetch(`${API_BASE_URL}/api/orders`)
-      .then(res=>res.json())
-      .then(data=>setOrders(data));
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setOrders(data);
+        } else {
+          console.error('API returned non-array data for orders:', data);
+          setOrders([]);
+        }
+      })
+      .catch(err => {
+        console.log('Error fetching orders:', err);
+        setOrders([]);
+      });
 
     fetch(`${API_BASE_URL}/api/suppliers`)
-      .then(res=>res.json())
-      .then(data=>setSuppliers(data));
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setSuppliers(data);
+        } else {
+          console.error('API returned non-array data for suppliers:', data);
+          setSuppliers([]);
+        }
+      })
+      .catch(err => {
+        console.log('Error fetching suppliers:', err);
+        setSuppliers([]);
+      });
 
     fetch(`${API_BASE_URL}/api/requests`)
-      .then(res=>res.json())
-      .then(data=>setRequests(data));
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then(data => {
+        if (Array.isArray(data)) {
+          setRequests(data);
+        } else {
+          console.error('API returned non-array data for requests:', data);
+          setRequests([]);
+        }
+      })
+      .catch(err => {
+        console.log('Error fetching requests:', err);
+        setRequests([]);
+      });
 
   },[]);
 

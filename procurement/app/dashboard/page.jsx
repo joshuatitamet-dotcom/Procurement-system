@@ -21,10 +21,35 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/dashboard`);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
       const data = await res.json();
-      setData(data);
+      // Ensure data has the expected structure
+      if (data && typeof data === 'object') {
+        setData({
+          suppliers: data.suppliers || 0,
+          requests: data.requests || 0,
+          orders: data.orders || 0,
+          pending: data.pending || 0
+        });
+      } else {
+        console.error('API returned unexpected data structure:', data);
+        setData({
+          suppliers: 0,
+          requests: 0,
+          orders: 0,
+          pending: 0
+        });
+      }
     } catch (err) {
-      console.log(err);
+      console.log('Error fetching dashboard data:', err);
+      setData({
+        suppliers: 0,
+        requests: 0,
+        orders: 0,
+        pending: 0
+      });
     }
   };
 

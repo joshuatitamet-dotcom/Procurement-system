@@ -19,9 +19,25 @@ export default function RequestsPage() {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/api/requests`)
-      .then((res) => res.json())
-      .then((data) => setRequests(data))
-      .catch((err) => console.log(err));
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        // Ensure data is an array before setting it
+        if (Array.isArray(data)) {
+          setRequests(data);
+        } else {
+          console.error('API returned non-array data:', data);
+          setRequests([]);
+        }
+      })
+      .catch((err) => {
+        console.log('Error fetching requests:', err);
+        setRequests([]);
+      });
   }, []);
 
   const filteredRequests = useMemo(() => {

@@ -22,27 +22,4 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-async function handleComplete(id) {
-
-  try {
-    const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ status: "Completed" })
-    });
-
-    if (res.ok) {
-      alert("Order Completed");
-
-      window.location.href = "/dashboard";
-    }
-
-  } catch (err) {
-    console.log(err);
-    alert("Error updating order");
-  }
-}
-
 module.exports = router;
