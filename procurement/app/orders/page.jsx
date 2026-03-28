@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import API_BASE_URL from "../config/api";
 
 export default function OrdersPage() {
 
@@ -20,44 +21,35 @@ export default function OrdersPage() {
   });
 
   const [showSuccess, setShowSuccess] = useState(false);
- async function deleteOrder(id) {
-  if (!confirm("Delete this order?")) return;
 
-  try {
-    fetch("https://procurement-system-2.onrender.com/api/dashboard")
-    const res = await fetch(`/api/orders/${id}`, {
-      method: "DELETE"
-    });
+  async function deleteOrder(id) {
+    if (!confirm("Delete this order?")) return;
 
-    if (res.ok) {
-      // Find the order to get supplier and request IDs
-      const orderToDelete = orders.find(o => o._id === id);
-      
-      // Remove order from UI
-      setOrders(prev => prev.filter(o => o._id !== id));
-      
-      // Remove linked supplier
-      if (orderToDelete?.supplier?._id) {
-        setSuppliers(prev => prev.filter(s => s._id !== orderToDelete.supplier._id));
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
+        method: "DELETE"
+      });
+
+      if (res.ok) {
+        // Remove order from UI
+        setOrders(prev => prev.filter(o => o._id !== id));
+        alert("Order deleted successfully");
+
+        // Refresh dashboard data
+        if (window.refreshDashboard) {
+          window.refreshDashboard();
+        }
+      } else {
+        alert("Failed to delete order");
       }
-      
-      // Remove linked request
-      if (orderToDelete?.request?._id) {
-        setRequests(prev => prev.filter(r => r._id !== orderToDelete.request._id));
-      }
-      
-      alert("Order and related items deleted successfully");
-    } else {
-      alert("Failed to delete order");
+    } catch (err) {
+      console.log(err);
+      alert("Server error");
     }
-  } catch (err) {
-    console.log(err);
-    alert("Server error");
   }
-}
 async function handleComplete(id) {
   try {
-    const res = await fetch(`http://localhost:5000/api/orders/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/orders/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json"
@@ -75,6 +67,11 @@ async function handleComplete(id) {
         )
       );
 
+      // Refresh dashboard data
+      if (window.refreshDashboard) {
+        window.refreshDashboard();
+      }
+
     } else {
       alert("Failed to update order");
     }
@@ -87,15 +84,15 @@ async function handleComplete(id) {
 
   useEffect(()=>{
 
-    fetch("http://localhost:5000/api/orders")
+    fetch(`${API_BASE_URL}/api/orders`)
       .then(res=>res.json())
       .then(data=>setOrders(data));
 
-    fetch("http://localhost:5000/api/suppliers")
+    fetch(`${API_BASE_URL}/api/suppliers`)
       .then(res=>res.json())
       .then(data=>setSuppliers(data));
 
-    fetch("http://localhost:5000/api/requests")
+    fetch(`${API_BASE_URL}/api/requests`)
       .then(res=>res.json())
       .then(data=>setRequests(data));
 
@@ -110,7 +107,7 @@ async function handleComplete(id) {
 
     e.preventDefault();
 
-    const res = await fetch("http://localhost:5000/api/orders",{
+    const res = await fetch(`${API_BASE_URL}/api/orders`,{
       method:"POST",
       headers:{
         "Content-Type":"application/json"
@@ -124,12 +121,18 @@ async function handleComplete(id) {
       setOrders([...orders,data.order]);
       setShowSuccess(true);
       setForm({ supplier: "", request: "" }); // Reset form
-      const goToDashboard = confirm("Order created! Would you like to return to the dashboard?");
-      if (goToDashboard) {
-        window.location.href="/dashboard";
+
+      // Refresh dashboard data
+      if (window.refreshDashboard) {
+        window.refreshDashboard();
       }
+
+      // Use Next.js router for proper redirect
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 2000); // Show success message for 2 seconds before redirect
     }
-  
+
   }
 
   /* SEARCH FILTER */

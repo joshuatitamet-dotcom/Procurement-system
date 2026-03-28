@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import API_BASE_URL from "../config/api";
 
 const statusColors = {
   Active: { background: "#16a34a", color: "#fff" },
@@ -17,8 +18,7 @@ export default function SuppliersPage() {
   const [nextStep, setNextStep] = useState(false);
 
   useEffect(() => {
-    fetch("https://procurement-system-2.onrender.com/api/dashboard")
-    fetch("/api/suppliers")
+    fetch(`${API_BASE_URL}/api/suppliers`)
       .then((res) => res.json())
       .then((data) => setSuppliers(data))
       .catch((err) => console.log(err));
@@ -37,8 +37,16 @@ export default function SuppliersPage() {
   async function deleteSupplier(id) {
     if (!confirm("Delete this supplier?")) return;
     try {
-      await fetch(`http://localhost:5000/api/suppliers/${id}`, { method: "DELETE" });
-      setSuppliers((prev) => prev.filter((s) => s._id !== id));
+      const res = await fetch(`${API_BASE_URL}/api/suppliers/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setSuppliers((prev) => prev.filter((s) => s._id !== id));
+        // Refresh dashboard data
+        if (window.refreshDashboard) {
+          window.refreshDashboard();
+        }
+      } else {
+        alert("Failed to delete supplier");
+      }
     } catch (error) {
       console.error(error);
       alert("Unable to delete supplier");

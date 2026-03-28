@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import API_BASE_URL from "../config/api";
 
 const statusColors = {
   Pending: { background: "#f97316", color: "#fff" },
@@ -17,8 +18,7 @@ export default function RequestsPage() {
   const [nextStep, setNextStep] = useState(false);
 
   useEffect(() => {
-    fetch("https://procurement-system-2.onrender.com/api/dashboard")
-    fetch("/api/requests")
+    fetch(`${API_BASE_URL}/api/requests`)
       .then((res) => res.json())
       .then((data) => setRequests(data))
       .catch((err) => console.log(err));
@@ -37,8 +37,16 @@ export default function RequestsPage() {
   async function deleteRequest(id) {
     if (!confirm("Delete this request?")) return;
     try {
-      await fetch(`http://localhost:5000/api/requests/${id}`, { method: "DELETE" });
-      setRequests((prev) => prev.filter((r) => r._id !== id));
+      const res = await fetch(`${API_BASE_URL}/api/requests/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        setRequests((prev) => prev.filter((r) => r._id !== id));
+        // Refresh dashboard data
+        if (window.refreshDashboard) {
+          window.refreshDashboard();
+        }
+      } else {
+        alert("Failed to delete request");
+      }
     } catch (error) {
       console.error(error);
       alert("Unable to delete request");

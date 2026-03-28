@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import API_BASE_URL from "../config/api";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -15,16 +16,35 @@ export default function Dashboard() {
     pending: 0
   });
 
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  const fetchDashboardData = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/dashboard`);
+      const data = await res.json();
+      setData(data);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   useEffect(() => {
-    fetch("https://procurement-system-2.onrender.com/api/dashboard")
-      .then((res) => res.json())
-      .then((data) => setData(data))
-      .catch((err) => console.log(err));
+    fetchDashboardData();
+  }, [refreshTrigger]);
+
+  // Function to refresh dashboard data (can be called after actions)
+  const refreshDashboard = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  // Make refresh function available globally for other components
+  useEffect(() => {
+    window.refreshDashboard = refreshDashboard;
   }, []);
 
   async function handleLogout() {
     try {
-      await fetch("http://localhost:5000/api/auth/logout", {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: "POST",
         headers: { "Content-Type": "application/json" }
       });
