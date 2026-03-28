@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
@@ -9,12 +10,13 @@ app.use(cors());
 app.use(express.json());
 
 /* DATABASE */
-mongoose.connect("mongodb://127.0.0.1:27017/procurement")
+const mongoURI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017/procurement";
+mongoose.connect(mongoURI)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => {
     console.log("❌ MongoDB Connection Failed:", err.message);
     console.log("⚠️  Server will start without database connection");
-    console.log("💡 To fix: Install MongoDB or use MongoDB Atlas");
+    console.log("💡 To fix: Set MONGODB_URI environment variable to MongoDB Atlas connection string");
   });
 
 /* ROUTES */
