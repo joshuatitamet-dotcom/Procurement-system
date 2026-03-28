@@ -10,8 +10,12 @@ app.use(express.json());
 
 /* DATABASE */
 mongoose.connect("mongodb://127.0.0.1:27017/procurement")
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+  .then(() => console.log("✅ MongoDB Connected"))
+  .catch(err => {
+    console.log("❌ MongoDB Connection Failed:", err.message);
+    console.log("⚠️  Server will start without database connection");
+    console.log("💡 To fix: Install MongoDB or use MongoDB Atlas");
+  });
 
 /* ROUTES */
 app.use("/api/auth", require("./routes/authRoutes"));
