@@ -1,6 +1,5 @@
 // API Configuration
-const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://procurement-system-2.onrender.com'
-  : 'http://localhost:5000';
+// Force production URL for live backend testing
+const API_BASE_URL = 'https://procurement-system-2.onrender.com';
 
 export default API_BASE_URL;
