@@ -1,9 +1,29 @@
+const mongoose = require("mongoose");
 const User = require("../models/User");
 
 // REGISTER USER
 const registerUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required"
+      });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        message: "Database unavailable. Check MONGODB_URI and try again."
+      });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({
+        message: "User already exists"
+      });
+    }
 
     const user = new User({
       email,
@@ -29,6 +49,18 @@ const registerUser = async (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({
+        message: "Email and password are required"
+      });
+    }
+
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({
+        message: "Database unavailable. Check MONGODB_URI and try again."
+      });
+    }
 
     const user = await User.findOne({ email });
 
