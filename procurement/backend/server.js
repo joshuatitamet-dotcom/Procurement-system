@@ -5,8 +5,34 @@ const cors = require("cors");
 
 const app = express();
 
+const allowedOrigins = (
+  process.env.CORS_ORIGINS ||
+  [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://procurement-system-xfb1.vercel.app"
+  ].join(",")
+)
+  .split(",")
+  .map(origin => origin.trim())
+  .filter(Boolean);
+
+const corsOptions = {
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204
+};
+
 /* MIDDLEWARE */
-app.use(cors());
+app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 app.use(express.json());
 
 /* DATABASE */
