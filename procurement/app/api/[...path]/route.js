@@ -1,7 +1,7 @@
 const defaultBackendBaseUrl =
   process.env.NODE_ENV === "development"
     ? "http://127.0.0.1:5000"
-    : "https://procurement-system-1-mzqc.onrender.com";
+    : "https://procurement-system-2.onrender.com";
 
 const BACKEND_BASE_URL = (
   process.env.API_BASE_URL ||
