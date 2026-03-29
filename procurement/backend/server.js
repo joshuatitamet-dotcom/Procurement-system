@@ -28,6 +28,16 @@ app.use("/api/orders", require("./routes/orderRoutes"));
 /* ✅ DASHBOARD API (ADD HERE) */
 app.get("/api/dashboard", async (req, res) => {
   try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.json({
+        suppliers: 0,
+        requests: 0,
+        orders: 0,
+        pending: 0,
+        databaseConnected: false
+      });
+    }
+
     const Supplier = require("./models/Supplier");
     const Request = require("./models/ProcurementRequest");
     const Order = require("./models/PurchaseOrder");
@@ -41,7 +51,8 @@ app.get("/api/dashboard", async (req, res) => {
       suppliers,
       requests,
       orders,
-      pending
+      pending,
+      databaseConnected: true
     });
 
   } catch (err) {

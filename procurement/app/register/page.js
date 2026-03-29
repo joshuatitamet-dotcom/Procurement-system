@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import API_BASE_URL from "../config/api";
 
 export default function RegisterPage(){
 
@@ -15,9 +16,7 @@ export default function RegisterPage(){
     e.preventDefault();
 
     try{
-
-    fetch("https://procurement-system-2.onrender.com/api/dashboard")
-      const res = await fetch("/api/register",{
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`,{
         method:"POST",
         headers:{
           "Content-Type":"application/json"
@@ -25,7 +24,10 @@ export default function RegisterPage(){
         body:JSON.stringify({email,password})
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await res.json()
+        : { message: "Unexpected server response" };
 
       if(res.ok){
         setMessage("Account created");

@@ -1,5 +1,6 @@
-// API Configuration
-// Force production URL for live backend testing
-const API_BASE_URL = 'https://procurement-system-2.onrender.com';
+// API configuration shared across the app.
+// Falls back to the deployed backend when NEXT_PUBLIC_API_URL is not set.
+const configuredBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://procurement-system-2.onrender.com";
+const API_BASE_URL = configuredBaseUrl.replace(/\/$/, "");
 
 export default API_BASE_URL;

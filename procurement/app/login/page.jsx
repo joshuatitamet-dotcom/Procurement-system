@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import API_BASE_URL from "../config/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,11 +22,9 @@ export default function LoginPage() {
   async function handleSubmit(e) {
     e.preventDefault();
 
-    fetch("https://procurement-system-2.onrender.com/api/dashboard")
-    const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
     const url = isLogin
-      ? `${API_BASE}/api/auth/login`
-      : `${API_BASE}/api/auth/register`;
+      ? `${API_BASE_URL}/api/auth/login`
+      : `${API_BASE_URL}/api/auth/register`;
 
     try {
       const res = await fetch(url, {
@@ -34,7 +33,10 @@ export default function LoginPage() {
         body: JSON.stringify(form)
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get("content-type") || "";
+      const data = contentType.includes("application/json")
+        ? await res.json()
+        : { message: "Unexpected server response" };
 
       if (res.ok) {
         if (isLogin) {
@@ -49,7 +51,7 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error("Login/register request failed:", error);
-      alert("Unable to reach server. Make sure backend is running at " + API_BASE);
+      alert("Unable to reach server. Make sure backend is running at " + API_BASE_URL);
     }
   }
 
