@@ -1,11 +1,17 @@
+const defaultBackendBaseUrl =
+  process.env.NODE_ENV === "development"
+    ? "http://127.0.0.1:5000"
+    : "https://procurement-system-1-mzqc.onrender.com";
+
 const BACKEND_BASE_URL = (
   process.env.API_BASE_URL ||
   process.env.NEXT_PUBLIC_API_URL ||
-  "https://procurement-system-1-mzqc.onrender.com"
+  defaultBackendBaseUrl
 ).replace(/\/$/, "");
 
 async function proxyRequest(request, { params }) {
-  const pathSegments = params.path || [];
+  const resolvedParams = await params;
+  const pathSegments = resolvedParams?.path || [];
   const targetUrl = new URL(`${BACKEND_BASE_URL}/api/${pathSegments.join("/")}`);
   const incomingUrl = new URL(request.url);
 
@@ -26,17 +32,31 @@ async function proxyRequest(request, { params }) {
     init.body = await request.text();
   }
 
-  const response = await fetch(targetUrl, init);
-  const responseHeaders = new Headers(response.headers);
-  responseHeaders.delete("content-encoding");
-  responseHeaders.delete("content-length");
-  responseHeaders.delete("transfer-encoding");
+  try {
+    const response = await fetch(targetUrl, {
+      ...init,
+      signal: AbortSignal.timeout(10000)
+    });
+    const responseHeaders = new Headers(response.headers);
+    responseHeaders.delete("content-encoding");
+    responseHeaders.delete("content-length");
+    responseHeaders.delete("transfer-encoding");
 
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers: responseHeaders
-  });
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: responseHeaders
+    });
+  } catch (error) {
+    return Response.json(
+      {
+        message: "Backend request failed",
+        backendUrl: BACKEND_BASE_URL,
+        error: error.message
+      },
+      { status: 502 }
+    );
+  }
 }
 
 export async function GET(request, context) {
