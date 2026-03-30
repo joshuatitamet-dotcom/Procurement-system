@@ -1,27 +1,29 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import API_BASE_URL from "../config/api";
 
-export default function RegisterPage(){
-
+export default function RegisterPage() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [email,setEmail] = useState("");
-  const [password,setPassword] = useState("");
-  const [message,setMessage] = useState("");
-
-  const handleRegister = async(e)=>{
+  const handleRegister = async (e) => {
     e.preventDefault();
+    setMessage("");
+    setIsSubmitting(true);
 
-    try{
-      const res = await fetch(`${API_BASE_URL}/api/auth/register`,{
-        method:"POST",
-        headers:{
-          "Content-Type":"application/json"
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
         },
-        body:JSON.stringify({email,password})
+        body: JSON.stringify({ email, password })
       });
 
       const contentType = res.headers.get("content-type") || "";
@@ -29,95 +31,112 @@ export default function RegisterPage(){
         ? await res.json()
         : { message: "Unexpected server response" };
 
-      if(res.ok){
-        setMessage("Account created");
+      if (res.ok) {
+        setMessage("Account created successfully. Redirecting to login...");
         router.push("/login");
-      }else{
+      } else {
         setMessage(data.message);
       }
-
-    }catch(error){
+    } catch {
       setMessage("Server error");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return(
+  return (
+    <main className="auth-page">
+      <div className="landing-backdrop landing-backdrop-one" />
+      <div className="landing-backdrop landing-backdrop-two" />
 
-    <div style={styles.container}>
+      <nav className="landing-nav auth-nav">
+        <div>
+          <p className="landing-brand-mark">FlowProcure</p>
+          <p className="landing-brand-subtitle">Start your procurement workspace</p>
+        </div>
 
-      <div style={styles.card}>
+        <div className="landing-nav-links">
+          <Link href="/" className="nav-link nav-link-muted">
+            Home
+          </Link>
+          <Link href="/login" className="nav-link nav-link-primary">
+            Login
+          </Link>
+        </div>
+      </nav>
 
-        <h2>Create Account</h2>
+      <section className="auth-grid">
+        <div className="auth-copy">
+          <p className="hero-kicker">Create your account</p>
+          <h1>Join the procurement system with the same modern experience from the homepage.</h1>
+          <p className="hero-text">
+            Set up your account and move straight into supplier tracking, purchase orders,
+            and approval workflows with a clean, polished onboarding flow.
+          </p>
 
-        <form onSubmit={handleRegister}>
+          <div className="auth-feature-list">
+            <div className="auth-feature-card">
+              <span>Fast setup</span>
+              <p>Create access in moments and move directly into the platform.</p>
+            </div>
+            <div className="auth-feature-card">
+              <span>Clear flow</span>
+              <p>Consistent styling keeps the journey smooth from home page to dashboard.</p>
+            </div>
+          </div>
+        </div>
 
-          <input
-            style={styles.input}
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e)=>setEmail(e.target.value)}
-            required
-          />
+        <div className="auth-card">
+          <div className="auth-card-header">
+            <p className="auth-eyebrow">New account</p>
+            <h2>Register</h2>
+            <p>Use your email and password to create access to the system.</p>
+          </div>
 
-          <input
-            style={styles.input}
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e)=>setPassword(e.target.value)}
-            required
-          />
+          <form onSubmit={handleRegister} className="auth-form">
+            <label className="auth-field">
+              <span>Email address</span>
+              <input
+                className="auth-input"
+                type="email"
+                placeholder="name@company.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </label>
 
-          <button style={styles.button}>
-            Register
-          </button>
+            <label className="auth-field">
+              <span>Password</span>
+              <input
+                className="auth-input"
+                type="password"
+                placeholder="Create a secure password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </label>
 
-        </form>
+            {message ? (
+              <p className={`auth-status ${message.includes("successfully") ? "is-success" : "is-error"}`}>
+                {message}
+              </p>
+            ) : null}
 
-        <p style={{color:"green"}}>{message}</p>
+            <button className="auth-submit" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Creating account..." : "Register"}
+            </button>
+          </form>
 
-        <p>
-          Already have an account? <a href="/login">Login</a>
-        </p>
-
-      </div>
-
-    </div>
+          <p className="auth-switch">
+            Already have an account?{" "}
+            <Link href="/login" className="auth-inline-link">
+              Login
+            </Link>
+          </p>
+        </div>
+      </section>
+    </main>
   );
 }
-
-const styles={
-  container:{
-    display:"flex",
-    justifyContent:"center",
-    alignItems:"center",
-    height:"100vh",
-    background:"#f4f6f8"
-  },
-
-  card:{
-    background:"white",
-    padding:"40px",
-    borderRadius:"10px",
-    boxShadow:"0 0 10px rgba(0,0,0,0.1)",
-    width:"320px"
-  },
-
-  input:{
-    width:"100%",
-    padding:"10px",
-    marginBottom:"15px",
-    border:"1px solid #ccc",
-    borderRadius:"5px"
-  },
-
-  button:{
-    width:"100%",
-    padding:"10px",
-    background:"#28a745",
-    color:"white",
-    border:"none",
-    borderRadius:"5px"
-  }
-};
