@@ -9,6 +9,7 @@ const navLinks = [
   { label: "Suppliers", path: "/suppliers", glyph: "SP" },
   { label: "Requests", path: "/requests", glyph: "RQ" },
   { label: "Orders", path: "/orders", glyph: "PO" },
+  { label: "Reports", path: "/reports", glyph: "RP" },
 ];
 
 export default function DashboardShell({ eyebrow, title, description, actions, children }) {
