@@ -1,16 +1,17 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+
+import { useEffect, useEffectEvent, useMemo, useState } from "react";
+import Link from "next/link";
 import API_BASE_URL from "../config/api";
+import DashboardShell from "../components/DashboardShell";
 
 const statusColors = {
-  Pending: { background: "#f97316", color: "#fff" },
-  Approved: { background: "#16a34a", color: "#fff" },
-  Rejected: { background: "#ef4444", color: "#fff" }
+  Pending: "dashboard-chip--warning",
+  Approved: "dashboard-chip--success",
+  Rejected: "dashboard-chip--danger",
 };
 
 export default function RequestsPage() {
-  const router = useRouter();
   const [requests, setRequests] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -18,62 +19,48 @@ export default function RequestsPage() {
   const [nextStep, setNextStep] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const fetchRequestsData = async () => {
+  const fetchRequestsData = useEffectEvent(async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/requests`);
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`);
       }
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setRequests(data);
-      } else {
-        console.error('API returned non-array data:', data);
-        setRequests([]);
-      }
-    } catch (err) {
-      console.log('Error fetching requests:', err);
+      setRequests(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.log("Error fetching requests:", error);
       setRequests([]);
     }
-  };
+  });
 
   useEffect(() => {
     fetchRequestsData();
   }, [refreshTrigger]);
 
-  // Function to refresh data
-  const refreshData = () => {
-    setRefreshTrigger(prev => prev + 1);
-  };
-
-  // Make refresh function available globally
   useEffect(() => {
-    window.refreshRequestsPage = refreshData;
+    window.refreshRequestsPage = () => {
+      setRefreshTrigger((prev) => prev + 1);
+    };
   }, []);
 
   const filteredRequests = useMemo(() => {
-    return requests
-      .filter((r) => {
-        const text = `${r.itemName} ${r.quantity} ${r.department}`.toLowerCase();
-        const matchesSearch = text.includes(search.toLowerCase());
-        const matchesStatus = statusFilter === "All" || r.status === statusFilter;
-        return matchesSearch && matchesStatus;
-      });
+    return requests.filter((request) => {
+      const text = `${request.itemName} ${request.quantity} ${request.department}`.toLowerCase();
+      const matchesSearch = text.includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "All" || request.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
   }, [requests, search, statusFilter]);
 
   async function deleteRequest(id) {
     if (!confirm("Delete this request?")) return;
     try {
       const res = await fetch(`${API_BASE_URL}/api/requests/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        setRequests((prev) => prev.filter((r) => r._id !== id));
-        // Refresh dashboard data
-        if (window.refreshDashboard) {
-          window.refreshDashboard();
-        }
-      } else {
-        alert("Failed to delete request");
+      if (!res.ok) {
+        throw new Error("Failed to delete request");
       }
+      setRequests((prev) => prev.filter((request) => request._id !== id));
+      window.refreshDashboard?.();
     } catch (error) {
       console.error(error);
       alert("Unable to delete request");
@@ -83,26 +70,22 @@ export default function RequestsPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     if (!requestForm.itemName || !requestForm.quantity || !requestForm.department) return;
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/requests`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(requestForm)
+        body: JSON.stringify(requestForm),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Request creation failed");
+      if (!res.ok) {
+        throw new Error(data.message || "Request creation failed");
+      }
       setRequests((prev) => [data.request || data, ...prev]);
       setRequestForm({ itemName: "", quantity: "", department: "", status: "Pending" });
       setNextStep(true);
-      alert("Request added");
-
-      // Refresh dashboard and orders page data
-      if (window.refreshDashboard) {
-        window.refreshDashboard();
-      }
-      if (window.refreshOrdersPage) {
-        window.refreshOrdersPage();
-      }
+      window.refreshDashboard?.();
+      window.refreshOrdersPage?.();
     } catch (error) {
       console.error(error);
       alert(error.message);
@@ -110,110 +93,123 @@ export default function RequestsPage() {
   }
 
   const total = requests.length;
-  const pending = requests.filter((r) => r.status === "Pending").length;
-  const approved = requests.filter((r) => r.status === "Approved").length;
+  const pending = requests.filter((request) => request.status === "Pending").length;
+  const approved = requests.filter((request) => request.status === "Approved").length;
 
   return (
-    <div style={pageContainer}>
-      <div style={panelBackground}></div>
-
-      <section style={headerSection}>
-        <div>
-          <h1>Procurement Requests</h1>
-          <p>Manage your requests</p>
-          <button style={navButton} onClick={() => router.push('/suppliers')}>← Suppliers</button>
-        </div>
-        <button style={primaryButton} onClick={() => document.getElementById("request-form").scrollIntoView({ behavior: "smooth" })}>+ Add Request</button>
+    <DashboardShell
+      eyebrow="Request flow"
+      title="Requests"
+      description="Capture procurement demand with guided forms, cleaner filtering, and the same design language as the rest of the system."
+      actions={
+        <button
+          className="dashboard-button dashboard-button--primary"
+          onClick={() => document.getElementById("request-form")?.scrollIntoView({ behavior: "smooth" })}
+        >
+          Add request
+        </button>
+      }
+    >
+      <section className="dashboard-summary-grid dashboard-summary-grid--three">
+        <article className="dashboard-stat-card"><p>Total requests</p><strong>{total}</strong><span>All procurement requests submitted so far.</span></article>
+        <article className="dashboard-stat-card is-highlight"><p>Pending</p><strong>{pending}</strong><span>Requests still waiting for a decision.</span></article>
+        <article className="dashboard-stat-card"><p>Approved</p><strong>{approved}</strong><span>Requests already cleared for ordering.</span></article>
       </section>
 
-      <section style={statsRow}>
-        <div style={statCard}> <h4>Total Requests</h4><strong>{total}</strong></div>
-        <div style={statCard}> <h4>Pending</h4><strong>{pending}</strong></div>
-        <div style={statCard}> <h4>Approved</h4><strong>{approved}</strong></div>
-      </section>
-
-      <section style={filterRow}>
-        <input style={searchInput} placeholder="🔍 Search requests..." value={search} onChange={(e) => setSearch(e.target.value)} />
-        <select style={selectInput} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="All">All</option>
-          <option value="Pending">Pending</option>
-          <option value="Approved">Approved</option>
-          <option value="Rejected">Rejected</option>
-        </select>
-      </section>
-
-      <section id="request-form" style={formSection}>
-        <form onSubmit={handleSubmit} style={formContainer}>
-          <h3>Add Request</h3>
-          <input style={inputStyle} placeholder="Item Name" value={requestForm.itemName} onChange={(e) => setRequestForm({ ...requestForm, itemName: e.target.value })} required />
-          <input style={inputStyle} type="number" placeholder="Quantity" value={requestForm.quantity} onChange={(e) => setRequestForm({ ...requestForm, quantity: e.target.value })} required />
-          <input style={inputStyle} placeholder="Department" value={requestForm.department} onChange={(e) => setRequestForm({ ...requestForm, department: e.target.value })} required />
-          <select style={inputStyle} value={requestForm.status} onChange={(e) => setRequestForm({ ...requestForm, status: e.target.value })}>
-            <option value="Pending">Pending</option>
-            <option value="Approved">Approved</option>
-            <option value="Rejected">Rejected</option>
-          </select>
-          <button style={primaryButton} type="submit">Save Request</button>
-        </form>
-        {nextStep && (
-          <div style={nextBox}>
-            <p>Request created successfully! Click Next to create an order.</p>
-            <button style={nextButton} onClick={() => router.push('/orders')}>Next →</button>
+      <section className="dashboard-panels-grid dashboard-panels-grid--content">
+        <article className="dashboard-panel">
+          <div className="dashboard-panel__header">
+            <div>
+              <p className="dashboard-panel__eyebrow">Find requests</p>
+              <h2>Search and filter</h2>
+            </div>
+            <Link href="/suppliers" className="dashboard-button dashboard-button--secondary">Back to suppliers</Link>
           </div>
-        )}
+
+          <div className="dashboard-toolbar">
+            <input className="dashboard-input" placeholder="Search by item, quantity, or department" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <select className="dashboard-input dashboard-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="All">All statuses</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        </article>
+
+        <article className="dashboard-panel" id="request-form">
+          <div className="dashboard-panel__header">
+            <div>
+              <p className="dashboard-panel__eyebrow">New request</p>
+              <h2>Create a procurement request</h2>
+            </div>
+          </div>
+
+          <form className="dashboard-form-grid" onSubmit={handleSubmit}>
+            <input className="dashboard-input" placeholder="Item name" value={requestForm.itemName} onChange={(e) => setRequestForm({ ...requestForm, itemName: e.target.value })} required />
+            <input className="dashboard-input" type="number" placeholder="Quantity" value={requestForm.quantity} onChange={(e) => setRequestForm({ ...requestForm, quantity: e.target.value })} required />
+            <input className="dashboard-input" placeholder="Department" value={requestForm.department} onChange={(e) => setRequestForm({ ...requestForm, department: e.target.value })} required />
+            <select className="dashboard-input dashboard-select" value={requestForm.status} onChange={(e) => setRequestForm({ ...requestForm, status: e.target.value })}>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+            <button className="dashboard-button dashboard-button--primary" type="submit">Save request</button>
+          </form>
+
+          {nextStep ? (
+            <div className="dashboard-inline-note">
+              <p>Request created successfully. Continue into purchase order creation.</p>
+              <Link href="/orders" className="dashboard-button dashboard-button--secondary">Go to orders</Link>
+            </div>
+          ) : null}
+        </article>
       </section>
 
-      <section style={tableWrap}>
-        <table style={tableStyle}>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Item Name</th>
-              <th>Quantity</th>
-              <th>Department</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredRequests.map((r, idx) => (
-              <tr key={r._id} style={rowStyle}>
-                <td>{idx + 1}</td>
-                <td>{r.itemName}</td>
-                <td>{r.quantity}</td>
-                <td>{r.department}</td>
-                <td><span style={{ ...statusChip, ...statusColors[r.status] }} >{r.status}</span></td>
-                <td>
-                  <button style={iconButton} title="Edit">✏️</button>
-                  <button style={iconButton} title="Delete" onClick={() => deleteRequest(r._id)}>🗑️</button>
-                  <button style={iconButton} title="View">👁️</button>
-                </td>
+      <section className="dashboard-panel dashboard-table-panel">
+        <div className="dashboard-panel__header">
+          <div>
+            <p className="dashboard-panel__eyebrow">Request records</p>
+            <h2>Current procurement requests</h2>
+          </div>
+        </div>
+
+        <div className="dashboard-table-wrap">
+          <table className="dashboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Department</th>
+                <th>Status</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {filteredRequests.map((request, index) => (
+                <tr key={request._id}>
+                  <td>{index + 1}</td>
+                  <td>{request.itemName}</td>
+                  <td>{request.quantity}</td>
+                  <td>{request.department}</td>
+                  <td>
+                    <span className={`dashboard-chip ${statusColors[request.status] || "dashboard-chip--muted"}`}>
+                      {request.status}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="dashboard-table-actions">
+                      <button className="dashboard-icon-button" type="button">Edit</button>
+                      <button className="dashboard-icon-button is-danger" type="button" onClick={() => deleteRequest(request._id)}>Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
-    </div>
+    </DashboardShell>
   );
 }
-
-const pageContainer = { position: "relative", minHeight: "100vh", padding: "24px 32px", fontFamily: "Inter, sans-serif", color: "#0f172a", background: "linear-gradient(135deg, #eef2ff 30%, #f8fafc 100%)" };
-const panelBackground = { position: "absolute", inset: 0, zIndex: -1, backgroundImage: "linear-gradient(135deg, rgba(34, 197, 94, .12), rgba(14, 165, 233, .12)), url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1200&q=80')", backgroundSize: "cover", backgroundPosition: "center", opacity: 0.18 };
-const headerSection = { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 };
-const primaryButton = { padding: "10px 18px", borderRadius: 10, border: "none", background: "#2563eb", color: "white", cursor: "pointer", fontWeight: 700, boxShadow: "0 4px 14px rgba(37, 99, 235, 0.4)", transition: "transform .2s" };
-const statsRow = { display: "flex", gap: 12, marginBottom: 16 };
-const statCard = { flex: 1, background: "white", borderRadius: 14, padding: 18, boxShadow: "0 12px 18px rgba(15, 23, 42, 0.08)", transition: "transform .25s", cursor: "default" };
-const filterRow = { display: "flex", gap: 12, alignItems: "center", marginBottom: 14 };
-const searchInput = { flex: 1, padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" };
-const selectInput = { padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" };
-const formSection = { marginBottom: 20 };
-const formContainer = { display: "grid", gap: 10, padding: 16, borderRadius: 12, background: "rgba(255,255,255,0.87)", boxShadow: "0 10px 20px rgba(15,23,42,0.08)" };
-const inputStyle = { padding: 10, borderRadius: 10, border: "1px solid #cbd5e1" };
-const tableWrap = { background: "white", borderRadius: 12, padding: 14, boxShadow: "0 10px 20px rgba(15, 23, 42, 0.08)", overflowX: "auto" };
-const tableStyle = { width: "100%", borderCollapse: "collapse" };
-const rowStyle = { transition: "background .2s", cursor: "pointer" };
-const statusChip = { padding: "4px 10px", borderRadius: 999, fontWeight: 700 };
-const iconButton = { marginRight: 8, border: "none", borderRadius: 8, padding: "5px 7px", cursor: "pointer", background: "#e2e8f0" };
-const navButton = { marginTop: 10, padding: "6px 10px", borderRadius: 8, border: "1px solid #93c5fd", background: "#dbeafe", color: "#1e40af", cursor: "pointer", fontWeight: 600 };
-const nextBox = { marginTop: 12, padding: 12, borderRadius: 10, background: "#f8fafc", border: "1px solid #93c5fd", display: "flex", justifyContent: "space-between", alignItems: "center" };
-const nextButton = { padding: "8px 14px", borderRadius: 8, border: "none", background: "#2563eb", color: "#fff", cursor: "pointer", fontWeight: 700 };
