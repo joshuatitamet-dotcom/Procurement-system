@@ -37,6 +37,21 @@ const registerUser = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("Register failed:", error);
+
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "User already exists"
+      });
+    }
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: "Invalid registration data",
+        error: error.message
+      });
+    }
+
     res.status(500).json({
       message: "Server error",
       error: error.message
@@ -82,6 +97,7 @@ const loginUser = async (req, res) => {
     });
 
   } catch (error) {
+    console.error("Login failed:", error);
     res.status(500).json({
       message: "Server error",
       error: error.message

@@ -11,7 +11,8 @@ const allowedOrigins = (
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "https://procurement-system-xfb1.vercel.app",
-    "https://procurement-system-xfb1-6wkp1k68t.vercel.app"
+    "https://procurement-system-xfb1-6wkp1k68t.vercel.app",
+    "https://procurement-system-jcuk.vercel.app"
   ].join(",")
 )
   .split(",")
