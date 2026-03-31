@@ -71,6 +71,12 @@ const registerUser = async (req, res) => {
   } catch (error) {
     console.error("Register failed:", error);
 
+    if (error.message && error.message.includes("SMTP is not configured")) {
+      return res.status(503).json({
+        message: "Email service is not configured on the server. Please contact the administrator."
+      });
+    }
+
     if (error.code === 11000) {
       return res.status(409).json({
         message: "User already exists"
@@ -201,6 +207,13 @@ const resendOtp = async (req, res) => {
     });
   } catch (error) {
     console.error("Resend OTP failed:", error);
+
+    if (error.message && error.message.includes("SMTP is not configured")) {
+      return res.status(503).json({
+        message: "Email service is not configured on the server. Please contact the administrator."
+      });
+    }
+
     return res.status(500).json({
       message: "Server error",
       error: error.message

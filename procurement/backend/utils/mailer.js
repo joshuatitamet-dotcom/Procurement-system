@@ -1,6 +1,8 @@
 const nodemailer = require("nodemailer");
 
 function createTransporter() {
+  const isProduction = process.env.NODE_ENV === "production";
+
   if (
     process.env.SMTP_HOST &&
     process.env.SMTP_PORT &&
@@ -20,6 +22,12 @@ function createTransporter() {
       sender: process.env.SMTP_FROM || process.env.SMTP_USER,
       simulated: false
     };
+  }
+
+  if (isProduction) {
+    throw new Error(
+      "SMTP is not configured. Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, and optionally SMTP_FROM."
+    );
   }
 
   return {
