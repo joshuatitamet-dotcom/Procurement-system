@@ -15,6 +15,26 @@ const UserSchema = new mongoose.Schema({
   role: {
     type: String,
     default: "admin"
+  },
+
+  isVerified: {
+    type: Boolean,
+    default: false
+  },
+
+  verificationOtpHash: {
+    type: String,
+    default: null
+  },
+
+  verificationOtpExpiresAt: {
+    type: Date,
+    default: null
+  },
+
+  verificationAttempts: {
+    type: Number,
+    default: 0
   }
 });
 

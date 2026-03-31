@@ -115,7 +115,7 @@ export default function LoginPage() {
                 className="auth-input"
                 type="password"
                 name="password"
-                placeholder="Enter your password"
+                placeholder="Enter the verified password you created"
                 value={form.password}
                 onChange={handleChange}
                 required
