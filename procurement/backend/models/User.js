@@ -35,6 +35,11 @@ const UserSchema = new mongoose.Schema({
   verificationAttempts: {
     type: Number,
     default: 0
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 });
 

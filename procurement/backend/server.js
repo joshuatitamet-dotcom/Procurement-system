@@ -52,6 +52,7 @@ app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/suppliers", require("./routes/supplierRoutes"));
 app.use("/api/requests", require("./routes/requestRoutes"));
 app.use("/api/orders", require("./routes/orderRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
 
 /* ✅ DASHBOARD API (ADD HERE) */
 app.get("/api/dashboard", async (req, res) => {

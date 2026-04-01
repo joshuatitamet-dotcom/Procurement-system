@@ -8,8 +8,13 @@ const navLinks = [
   { label: "Dashboard", path: "/dashboard", glyph: "DB" },
   { label: "Suppliers", path: "/suppliers", glyph: "SP" },
   { label: "Requests", path: "/requests", glyph: "RQ" },
+  { label: "Approvals", path: "/approvals", glyph: "AP" },
   { label: "Orders", path: "/orders", glyph: "PO" },
+  { label: "Receiving", path: "/receiving", glyph: "RC" },
+  { label: "Invoices", path: "/invoices", glyph: "IV" },
   { label: "Reports", path: "/reports", glyph: "RP" },
+  { label: "Users", path: "/users", glyph: "US" },
+  { label: "Audit Log", path: "/audit-log", glyph: "LG" },
 ];
 
 export default function DashboardShell({ eyebrow, title, description, actions, children }) {
@@ -37,7 +42,7 @@ export default function DashboardShell({ eyebrow, title, description, actions, c
       <aside className="dashboard-sidebar">
         <div>
           <p className="dashboard-sidebar__brand">FlowProcure</p>
-          <p className="dashboard-sidebar__tag">Operations command center</p>
+          <p className="dashboard-sidebar__tag">End-to-end procurement operations</p>
         </div>
 
         <nav className="dashboard-nav">
@@ -57,8 +62,8 @@ export default function DashboardShell({ eyebrow, title, description, actions, c
           <div className="dashboard-sidebar__profile">
             <div className="dashboard-sidebar__avatar">FM</div>
             <div>
-              <p>Flow Manager</p>
-              <span>Procurement workspace</span>
+              <p>Procurement Control</p>
+              <span>Requests, approvals, orders, and spend</span>
             </div>
           </div>
 
