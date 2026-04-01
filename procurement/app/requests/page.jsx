@@ -16,6 +16,7 @@ export default function RequestsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [requestForm, setRequestForm] = useState({ itemName: "", quantity: "", department: "", status: "Pending" });
+  const [editingRequestId, setEditingRequestId] = useState("");
   const [nextStep, setNextStep] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -72,17 +73,24 @@ export default function RequestsPage() {
     if (!requestForm.itemName || !requestForm.quantity || !requestForm.department) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/requests`, {
-        method: "POST",
+      const isEditing = Boolean(editingRequestId);
+      const res = await fetch(`${API_BASE_URL}/api/requests${isEditing ? `/${editingRequestId}` : ""}`, {
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(requestForm),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || "Request creation failed");
+        throw new Error(data.message || "Request save failed");
       }
-      setRequests((prev) => [data.request || data, ...prev]);
+      const savedRequest = data.request || data;
+      setRequests((prev) =>
+        isEditing
+          ? prev.map((request) => (request._id === editingRequestId ? savedRequest : request))
+          : [savedRequest, ...prev]
+      );
       setRequestForm({ itemName: "", quantity: "", department: "", status: "Pending" });
+      setEditingRequestId("");
       setNextStep(true);
       window.refreshDashboard?.();
       window.refreshOrdersPage?.();
@@ -95,6 +103,23 @@ export default function RequestsPage() {
   const total = requests.length;
   const pending = requests.filter((request) => request.status === "Pending").length;
   const approved = requests.filter((request) => request.status === "Approved").length;
+
+  function handleEditRequest(request) {
+    setRequestForm({
+      itemName: request.itemName || "",
+      quantity: request.quantity || "",
+      department: request.department || "",
+      status: request.status || "Pending",
+    });
+    setEditingRequestId(request._id);
+    setNextStep(false);
+    document.getElementById("request-form")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function handleCancelEdit() {
+    setRequestForm({ itemName: "", quantity: "", department: "", status: "Pending" });
+    setEditingRequestId("");
+  }
 
   return (
     <DashboardShell
@@ -140,8 +165,8 @@ export default function RequestsPage() {
         <article className="dashboard-panel" id="request-form">
           <div className="dashboard-panel__header">
             <div>
-              <p className="dashboard-panel__eyebrow">New request</p>
-              <h2>Create a procurement request</h2>
+              <p className="dashboard-panel__eyebrow">{editingRequestId ? "Edit request" : "New request"}</p>
+              <h2>{editingRequestId ? "Update procurement request" : "Create a procurement request"}</h2>
             </div>
           </div>
 
@@ -154,7 +179,16 @@ export default function RequestsPage() {
               <option value="Approved">Approved</option>
               <option value="Rejected">Rejected</option>
             </select>
-            <button className="dashboard-button dashboard-button--primary" type="submit">Save request</button>
+            <div className="dashboard-form-actions">
+              <button className="dashboard-button dashboard-button--primary" type="submit">
+                {editingRequestId ? "Update request" : "Save request"}
+              </button>
+              {editingRequestId ? (
+                <button className="dashboard-button dashboard-button--secondary" type="button" onClick={handleCancelEdit}>
+                  Cancel
+                </button>
+              ) : null}
+            </div>
           </form>
 
           {nextStep ? (
@@ -200,7 +234,7 @@ export default function RequestsPage() {
                   </td>
                   <td>
                     <div className="dashboard-table-actions">
-                      <button className="dashboard-icon-button" type="button">Edit</button>
+                      <button className="dashboard-icon-button" type="button" onClick={() => handleEditRequest(request)}>Edit</button>
                       <button className="dashboard-icon-button is-danger" type="button" onClick={() => deleteRequest(request._id)}>Delete</button>
                     </div>
                   </td>

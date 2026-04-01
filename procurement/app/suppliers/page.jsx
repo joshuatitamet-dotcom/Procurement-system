@@ -16,6 +16,7 @@ export default function SuppliersPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [supplierForm, setSupplierForm] = useState({ name: "", email: "", phone: "", status: "Active" });
+  const [editingSupplierId, setEditingSupplierId] = useState("");
   const [nextStep, setNextStep] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -72,17 +73,25 @@ export default function SuppliersPage() {
     if (!supplierForm.name || !supplierForm.email || !supplierForm.phone) return;
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/suppliers`, {
-        method: "POST",
+      const isEditing = Boolean(editingSupplierId);
+      const res = await fetch(`${API_BASE_URL}/api/suppliers${isEditing ? `/${editingSupplierId}` : ""}`, {
+        method: isEditing ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(supplierForm),
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.message || "Supplier creation failed");
+        throw new Error(data.message || "Supplier save failed");
       }
-      setSuppliers((prev) => [data.supplier || data, ...prev]);
+
+      const savedSupplier = data.supplier || data;
+      setSuppliers((prev) =>
+        isEditing
+          ? prev.map((supplier) => (supplier._id === editingSupplierId ? savedSupplier : supplier))
+          : [savedSupplier, ...prev]
+      );
       setSupplierForm({ name: "", email: "", phone: "", status: "Active" });
+      setEditingSupplierId("");
       setNextStep(true);
       window.refreshDashboard?.();
       window.refreshOrdersPage?.();
@@ -95,6 +104,23 @@ export default function SuppliersPage() {
   const total = suppliers.length;
   const active = suppliers.filter((supplier) => supplier.status === "Active").length;
   const inactive = suppliers.filter((supplier) => supplier.status === "Inactive").length;
+
+  function handleEditSupplier(supplier) {
+    setSupplierForm({
+      name: supplier.name || "",
+      email: supplier.email || "",
+      phone: supplier.phone || "",
+      status: supplier.status || "Active",
+    });
+    setEditingSupplierId(supplier._id);
+    setNextStep(false);
+    document.getElementById("supplier-form")?.scrollIntoView({ behavior: "smooth" });
+  }
+
+  function handleCancelEdit() {
+    setSupplierForm({ name: "", email: "", phone: "", status: "Active" });
+    setEditingSupplierId("");
+  }
 
   return (
     <DashboardShell
@@ -145,8 +171,8 @@ export default function SuppliersPage() {
         <article className="dashboard-panel" id="supplier-form">
           <div className="dashboard-panel__header">
             <div>
-              <p className="dashboard-panel__eyebrow">New supplier</p>
-              <h2>Add supplier profile</h2>
+              <p className="dashboard-panel__eyebrow">{editingSupplierId ? "Edit supplier" : "New supplier"}</p>
+              <h2>{editingSupplierId ? "Update supplier profile" : "Add supplier profile"}</h2>
             </div>
           </div>
 
@@ -159,7 +185,16 @@ export default function SuppliersPage() {
               <option value="Inactive">Inactive</option>
               <option value="Pending">Pending</option>
             </select>
-            <button className="dashboard-button dashboard-button--primary" type="submit">Save supplier</button>
+            <div className="dashboard-form-actions">
+              <button className="dashboard-button dashboard-button--primary" type="submit">
+                {editingSupplierId ? "Update supplier" : "Save supplier"}
+              </button>
+              {editingSupplierId ? (
+                <button className="dashboard-button dashboard-button--secondary" type="button" onClick={handleCancelEdit}>
+                  Cancel
+                </button>
+              ) : null}
+            </div>
           </form>
 
           {nextStep ? (
@@ -205,7 +240,7 @@ export default function SuppliersPage() {
                   </td>
                   <td>
                     <div className="dashboard-table-actions">
-                      <button className="dashboard-icon-button" type="button">Edit</button>
+                      <button className="dashboard-icon-button" type="button" onClick={() => handleEditSupplier(supplier)}>Edit</button>
                       <button className="dashboard-icon-button is-danger" type="button" onClick={() => deleteSupplier(supplier._id)}>Delete</button>
                     </div>
                   </td>

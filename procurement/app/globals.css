@@ -1358,6 +1358,12 @@ a {
   margin-top: 18px;
 }
 
+.dashboard-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
 .dashboard-button {
   display: inline-flex;
   align-items: center;
@@ -1399,6 +1405,105 @@ a {
   margin-bottom: 18px;
   border-color: rgba(31, 138, 112, 0.18);
   background: rgba(217, 244, 235, 0.7);
+}
+
+.dashboard-action-stack,
+.workflow-stage-list,
+.audit-log-list {
+  display: grid;
+  gap: 14px;
+}
+
+.dashboard-action-stack,
+.workflow-stage-list {
+  margin-top: 20px;
+}
+
+.dashboard-action-card,
+.workflow-stage-card,
+.audit-log-row {
+  border: 1px solid rgba(19, 33, 38, 0.08);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 14px 28px rgba(19, 33, 38, 0.06);
+}
+
+.dashboard-action-card,
+.workflow-stage-card {
+  padding: 18px;
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+.dashboard-action-card:hover,
+.workflow-stage-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(31, 138, 112, 0.2);
+  box-shadow: 0 18px 34px rgba(19, 33, 38, 0.08);
+}
+
+.dashboard-action-card p,
+.dashboard-action-card span,
+.dashboard-action-card strong,
+.workflow-stage-card p,
+.workflow-stage-card small,
+.audit-log-row p,
+.audit-log-row small,
+.audit-log-row strong {
+  margin: 0;
+}
+
+.dashboard-action-card p,
+.workflow-stage-card__top p,
+.audit-log-row strong {
+  font-weight: 800;
+}
+
+.dashboard-action-card span,
+.workflow-stage-card small,
+.audit-log-row p,
+.audit-log-row small {
+  color: rgba(19, 33, 38, 0.64);
+  line-height: 1.6;
+}
+
+.dashboard-action-card strong {
+  display: inline-flex;
+  margin-top: 12px;
+  color: var(--navy);
+}
+
+.workflow-stage-card__top,
+.audit-log-row__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.workflow-stage-card small {
+  display: block;
+  margin-top: 10px;
+}
+
+.workflow-stage-card.is-static:hover {
+  transform: none;
+}
+
+.audit-log-list {
+  margin-top: 20px;
+}
+
+.audit-log-row {
+  padding: 18px;
+}
+
+.audit-log-row p {
+  margin-top: 10px;
+}
+
+.audit-log-row small {
+  display: block;
+  margin-top: 8px;
 }
 
 .dashboard-table-panel {
@@ -1651,7 +1756,10 @@ a {
   .dashboard-panel__header,
   .dashboard-toolbar,
   .dashboard-inline-note,
-  .dashboard-table-actions {
+  .dashboard-table-actions,
+  .dashboard-form-actions,
+  .workflow-stage-card__top,
+  .audit-log-row__meta {
     align-items: stretch;
     flex-direction: column;
   }

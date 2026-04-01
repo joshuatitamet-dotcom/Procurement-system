@@ -19,6 +19,11 @@ const SupplierSchema = new mongoose.Schema({
   status: {
     type: String,
     default: "Active"
+  },
+
+  createdAt: {
+    type: Date,
+    default: Date.now
   }
 
 });

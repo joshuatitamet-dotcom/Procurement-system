@@ -6,6 +6,21 @@ const { createSupplier, getSuppliers } = require("../controllers/supplierControl
 /* FIXED ROUTES */
 router.post("/", createSupplier);
 router.get("/", getSuppliers);
+router.put("/:id", async (req, res) => {
+  try {
+    const Supplier = require("../models/Supplier");
+
+    const updated = await Supplier.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { returnDocument: "after" }
+    );
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 router.delete("/:id", async (req, res) => {
   try {
     const Supplier = require("../models/Supplier");

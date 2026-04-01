@@ -69,6 +69,12 @@ export default function OrdersPage() {
       return;
     }
 
+    const selectedRequest = requests.find((request) => request._id === form.request);
+    if (!selectedRequest || selectedRequest.status !== "Approved") {
+      alert("Only approved requests can be converted into purchase orders");
+      return;
+    }
+
     const res = await fetch(`${API_BASE_URL}/api/orders`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -132,6 +138,11 @@ export default function OrdersPage() {
     });
   }, [orders, search]);
 
+  const approvedRequests = useMemo(
+    () => requests.filter((request) => request.status === "Approved"),
+    [requests]
+  );
+
   return (
     <DashboardShell
       eyebrow="Purchase flow"
@@ -183,10 +194,14 @@ export default function OrdersPage() {
             </div>
           </div>
 
+          <div className="dashboard-inline-note">
+            <p>Orders can only be created from approved requests so the workflow stays controlled.</p>
+          </div>
+
           <form className="dashboard-form-grid" onSubmit={handleSubmit}>
             <select className="dashboard-input dashboard-select" name="request" value={form.request} onChange={handleChange} required>
-              <option value="">Select request</option>
-              {requests.map((request) => (
+              <option value="">{approvedRequests.length ? "Select approved request" : "No approved requests available"}</option>
+              {approvedRequests.map((request) => (
                 <option key={request._id} value={request._id}>
                   {request.itemName} - {request.quantity} units ({request.department})
                 </option>
@@ -202,7 +217,9 @@ export default function OrdersPage() {
               ))}
             </select>
 
-            <button className="dashboard-button dashboard-button--primary" type="submit">Create order</button>
+            <button className="dashboard-button dashboard-button--primary" type="submit" disabled={!approvedRequests.length}>
+              Create order
+            </button>
           </form>
         </article>
       </section>
