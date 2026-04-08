@@ -9,6 +9,8 @@ const BACKEND_BASE_URL = (
   defaultBackendBaseUrl
 ).replace(/\/$/, "");
 
+const BACKEND_TIMEOUT_MS = Number(process.env.BACKEND_TIMEOUT_MS || 30000);
+
 async function proxyRequest(request, { params }) {
   const resolvedParams = await params;
   const pathSegments = resolvedParams?.path || [];
@@ -35,7 +37,7 @@ async function proxyRequest(request, { params }) {
   try {
     const response = await fetch(targetUrl, {
       ...init,
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(BACKEND_TIMEOUT_MS)
     });
     const responseHeaders = new Headers(response.headers);
     responseHeaders.delete("content-encoding");
@@ -48,13 +50,22 @@ async function proxyRequest(request, { params }) {
       headers: responseHeaders
     });
   } catch (error) {
+    const timedOut =
+      error?.name === "TimeoutError" ||
+      error?.name === "AbortError" ||
+      /timed out|timeout/i.test(error?.message || "");
+
     return Response.json(
       {
-        message: "Backend request failed",
+        message: timedOut
+          ? "Backend request timed out"
+          : "Backend request failed",
         backendUrl: BACKEND_BASE_URL,
+        timeoutMs: BACKEND_TIMEOUT_MS,
+        path: `/api/${pathSegments.join("/")}`,
         error: error.message
       },
-      { status: 502 }
+      { status: timedOut ? 504 : 502 }
     );
   }
 }
