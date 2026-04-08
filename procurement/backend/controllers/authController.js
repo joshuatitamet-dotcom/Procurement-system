@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
-const { sendOtpEmail } = require("../utils/mailer");
+const { sendOtpEmail, isMailDeliveryError } = require("../utils/mailer");
 const { generateOtp, hashOtp, validatePassword } = require("../utils/authHelpers");
 
 async function issueVerificationOtp(user) {
@@ -11,6 +11,10 @@ async function issueVerificationOtp(user) {
   user.verificationAttempts = 0;
   await user.save();
   await sendOtpEmail({ email: user.email, otp });
+}
+
+function buildMailFailureMessage() {
+  return "Your account is waiting for email verification, but we couldn't deliver the OTP right now. Please try Resend OTP again in a moment.";
 }
 
 // REGISTER USER
@@ -47,7 +51,19 @@ const registerUser = async (req, res) => {
 
       existingUser.password = await bcrypt.hash(password, 10);
       existingUser.isVerified = false;
-      await issueVerificationOtp(existingUser);
+      try {
+        await issueVerificationOtp(existingUser);
+      } catch (error) {
+        if (isMailDeliveryError(error) || error.isMailDeliveryError) {
+          return res.status(202).json({
+            message: buildMailFailureMessage(),
+            requiresVerification: true,
+            emailDeliveryFailed: true
+          });
+        }
+
+        throw error;
+      }
 
       return res.status(200).json({
         message: "Verification code sent to your email",
@@ -61,7 +77,19 @@ const registerUser = async (req, res) => {
     });
 
     await user.save();
-    await issueVerificationOtp(user);
+    try {
+      await issueVerificationOtp(user);
+    } catch (error) {
+      if (isMailDeliveryError(error) || error.isMailDeliveryError) {
+        return res.status(202).json({
+          message: buildMailFailureMessage(),
+          requiresVerification: true,
+          emailDeliveryFailed: true
+        });
+      }
+
+      throw error;
+    }
 
     res.status(201).json({
       message: "Account created. Enter the OTP sent to your email to verify your account.",
@@ -74,6 +102,12 @@ const registerUser = async (req, res) => {
     if (error.message && error.message.includes("SMTP is not configured")) {
       return res.status(503).json({
         message: "Email service is not configured on the server. Please contact the administrator."
+      });
+    }
+
+    if (isMailDeliveryError(error) || error.isMailDeliveryError) {
+      return res.status(503).json({
+        message: "Email service is temporarily unavailable. Please try requesting the OTP again shortly."
       });
     }
 
@@ -211,6 +245,12 @@ const resendOtp = async (req, res) => {
     if (error.message && error.message.includes("SMTP is not configured")) {
       return res.status(503).json({
         message: "Email service is not configured on the server. Please contact the administrator."
+      });
+    }
+
+    if (isMailDeliveryError(error) || error.isMailDeliveryError) {
+      return res.status(503).json({
+        message: "We couldn't send the OTP email right now. Please try again in a moment."
       });
     }
 
