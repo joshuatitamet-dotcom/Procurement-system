@@ -14,6 +14,12 @@ const PurchaseOrderSchema = new mongoose.Schema({
     required: true
   },
 
+  items: [{
+    description: { type: String, required: true },
+    qty: { type: Number, required: true },
+    unit_price: { type: Number, required: true }
+  }],
+
   status: {
     type: String,
     default: "Ordered"
